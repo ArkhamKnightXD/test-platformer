@@ -69,6 +69,10 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         float koalaWidth = 1 / 16f * regions[0].getRegionWidth();
         float koalaHeight = 1 / 16f * regions[0].getRegionHeight();
 
+        // create the Koala we want to move around the world
+        koala = new Koala(koalaWidth, koalaHeight);
+        koala.position.set(20, 20);
+
         // load the map, set the unit scale to 1/16 (1 unit == 16 pixels)
         map = new TmxMapLoader().load("level1.tmx");
         renderer = new OrthogonalTiledMapRenderer(map, 1 / 16f);
@@ -77,10 +81,6 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 30, 20);
         camera.update();
-
-        // create the Koala we want to move around the world
-        koala = new Koala(koalaWidth, koalaHeight);
-        koala.position.set(20, 20);
 
         debugRenderer = new ShapeRenderer();
     }
