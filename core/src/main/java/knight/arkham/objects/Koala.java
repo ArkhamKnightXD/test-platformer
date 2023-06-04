@@ -15,20 +15,16 @@ public class Koala {
     public float maxVelocity;
     public float jumpVelocity;
     public float damping;
-
     public final Vector2 position;
     public final Vector2 velocity;
     public PlayerState state;
     public float stateTime;
     public boolean facesRight;
     public boolean grounded;
-
     private final Animation<TextureRegion> stand;
     private final Animation<TextureRegion> walk;
     private final Animation<TextureRegion> jump;
-
     private final Texture sprite;
-
 
     public Koala() {
 
@@ -55,9 +51,7 @@ public class Koala {
         jumpVelocity = 40f;
         damping = 0.87f;
 
-        position = new Vector2();
-        position.set(20, 20);
-
+        position = new Vector2(20, 20);
         velocity = new Vector2();
 
         facesRight = true;
