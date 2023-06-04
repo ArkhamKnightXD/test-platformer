@@ -14,20 +14,18 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.ScreenUtils;
 import knight.arkham.objects.Koala;
-import knight.arkham.objects.PlayerState;
 
 /** Super Mario Brothers-like very basic platformer, using a tile map built using <a href="http://www.mapeditor.org/">Tiled</a> and a
  * tileset and sprites by <a href="http://www.vickiwenderlich.com/">Vicky Wenderlich</a></p>
  *
  * Shows simple platformer collision detection as well as on-the-fly map modifications through destructible blocks!
  * @author mzechner */
-public class TestPlatform extends InputAdapter implements ApplicationListener {
+public class Platformer extends InputAdapter implements ApplicationListener {
 
     private TiledMap map;
     private OrthogonalTiledMapRenderer renderer;
@@ -100,26 +98,7 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         if (deltaTime > 0.1f)
             deltaTime = 0.1f;
 
-        koala.stateTime += deltaTime;
-
-        // check input and apply to velocity & state
-        if ((Gdx.input.isKeyPressed(Keys.SPACE) || isTouched(0.5f, 1)) && koala.grounded) {
-            koala.velocity.y += koala.jumpVelocity;
-            koala.state = PlayerState.Jumping;
-            koala.grounded = false;
-        }
-
-        if (Gdx.input.isKeyPressed(Keys.LEFT) || Gdx.input.isKeyPressed(Keys.A) || isTouched(0, 0.25f)) {
-            koala.velocity.x = -koala.maxVelocity;
-            if (koala.grounded) koala.state = PlayerState.Walking;
-            koala.facesRight = false;
-        }
-
-        if (Gdx.input.isKeyPressed(Keys.RIGHT) || Gdx.input.isKeyPressed(Keys.D) || isTouched(0.25f, 0.5f)) {
-            koala.velocity.x = koala.maxVelocity;
-            if (koala.grounded) koala.state = PlayerState.Walking;
-            koala.facesRight = true;
-        }
+        koala.update(deltaTime);
 
         if (Gdx.input.isKeyJustPressed(Keys.B))
             debug = !debug;
@@ -127,18 +106,7 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         // apply gravity if we are falling
         koala.velocity.add(0, GRAVITY);
 
-        // clamp the velocity to the maximum, x-axis only
-        koala.velocity.x = MathUtils.clamp(koala.velocity.x, -koala.maxVelocity, koala.maxVelocity);
-
-        // If the velocity is < 1, set it to 0 and set state to Standing
-        if (Math.abs(koala.velocity.x) < 1) {
-            koala.velocity.x = 0;
-
-            if (koala.grounded)
-                koala.state = PlayerState.Standing;
-        }
-
-        // multiply by delta time so we know how far we go
+        // multiply by delta time, so we know how far we go
         // in this frame
         koala.velocity.scl(deltaTime);
 
@@ -185,7 +153,7 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         for (Rectangle tile : tiles) {
 
             if (koalaRect.overlaps(tile)) {
-                // we actually reset the koala y-position here
+                // we actually reset the koala y-position here,
                 // so it is just below/above the tile we collided with
                 // this removes bouncing :)
                 if (koala.velocity.y > 0) {
@@ -195,7 +163,7 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
                     layer.setCell((int)tile.x, (int)tile.y, null);
                 } else {
                     koala.position.y = tile.y + tile.height;
-                    // if we hit the ground, mark us as grounded so we can jump
+                    // if we hit the ground, mark us as grounded, so we can jump
                     koala.grounded = true;
                 }
                 koala.velocity.y = 0;
@@ -209,23 +177,12 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         koala.position.add(koala.velocity);
         koala.velocity.scl(1 / deltaTime);
 
-        // Apply damping to the velocity on the x-axis so we don't
+        // Apply damping to the velocity on the x-axis, so we don't
         // walk infinitely once a key was pressed
         koala.velocity.x *= koala.damping;
     }
 
-    private boolean isTouched (float startX, float endX) {
-        // Check for touch inputs between startX and endX
-        // startX/endX are given between 0 (left edge of the screen) and 1 (right edge of the screen)
-        for (int i = 0; i < 2; i++) {
 
-            float x = Gdx.input.getX(i) / (float)Gdx.graphics.getBackBufferWidth();
-
-            if (Gdx.input.isTouched(i) && (x >= startX && x <= endX))
-                return true;
-        }
-        return false;
-    }
 
     private void getTiles (int startX, int startY, int endX, int endY, Array<Rectangle> tiles) {
 
