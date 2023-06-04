@@ -7,10 +7,6 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -22,6 +18,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.ScreenUtils;
 import knight.arkham.objects.Koala;
 import knight.arkham.objects.PlayerState;
 
@@ -35,11 +32,7 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
     private TiledMap map;
     private OrthogonalTiledMapRenderer renderer;
     private OrthographicCamera camera;
-    private Animation<TextureRegion> stand;
-    private Animation<TextureRegion> walk;
-    private Animation<TextureRegion> jump;
     private Koala koala;
-    private Texture koalaTexture;
     private final Pool<Rectangle> rectPool = new Pool<>() {
         @Override
         protected Rectangle newObject() {
@@ -55,23 +48,9 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
 
     @Override
     public void create () {
-        // load the koala frames, split them, and assign them to Animations
-        koalaTexture = new Texture("koalio.png");
-        TextureRegion[] regions = TextureRegion.split(koalaTexture, 18, 26)[0];
-        stand = new Animation<>(0, regions[0]);
-        jump = new Animation<>(0, regions[1]);
-        walk = new Animation<>(0.15f, regions[2], regions[3], regions[4]);
-        walk.setPlayMode(Animation.PlayMode.LOOP_PINGPONG);
-
-        // figure out the width and height of the koala for collision
-        // detection and rendering by converting a koala frames pixel
-        // size into world units (1 unit == 16 pixels)
-        float koalaWidth = 1 / 16f * regions[0].getRegionWidth();
-        float koalaHeight = 1 / 16f * regions[0].getRegionHeight();
 
         // create the Koala we want to move around the world
-        koala = new Koala(koalaWidth, koalaHeight);
-        koala.position.set(20, 20);
+        koala = new Koala();
 
         // load the map, set the unit scale to 1/16 (1 unit == 16 pixels)
         map = new TmxMapLoader().load("level1.tmx");
@@ -88,7 +67,8 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
     @Override
     public void render () {
         // clear the screen
-        Gdx.gl.glClearColor(0.7f, 0.7f, 1.0f, 1);
+        ScreenUtils.clear(0.7f, 0.7f, 1.0f, 1);
+
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // get the delta time
@@ -107,7 +87,7 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         renderer.render();
 
         // render the koala
-        renderKoala();
+        koala.draw(renderer.getBatch());
 
         // render debug rectangles
         if (debug)
@@ -179,7 +159,9 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         endY = (int)(koala.position.y + koala.height);
         getTiles(startX, startY, endX, endY, tiles);
         koalaRect.x += koala.velocity.x;
+
         for (Rectangle tile : tiles) {
+
             if (koalaRect.overlaps(tile)) {
                 koala.velocity.x = 0;
                 break;
@@ -199,7 +181,9 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
         endX = (int)(koala.position.x + koala.width);
         getTiles(startX, startY, endX, endY, tiles);
         koalaRect.y += koala.velocity.y;
+
         for (Rectangle tile : tiles) {
+
             if (koalaRect.overlaps(tile)) {
                 // we actually reset the koala y-position here
                 // so it is just below/above the tile we collided with
@@ -239,53 +223,31 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
 
             if (Gdx.input.isTouched(i) && (x >= startX && x <= endX))
                 return true;
-
         }
         return false;
     }
 
     private void getTiles (int startX, int startY, int endX, int endY, Array<Rectangle> tiles) {
+
         TiledMapTileLayer layer = (TiledMapTileLayer)map.getLayers().get("walls");
+
         rectPool.freeAll(tiles);
         tiles.clear();
+
         for (int y = startY; y <= endY; y++) {
+
             for (int x = startX; x <= endX; x++) {
+
                 Cell cell = layer.getCell(x, y);
+
                 if (cell != null) {
+
                     Rectangle rect = rectPool.obtain();
                     rect.set(x, y, 1, 1);
                     tiles.add(rect);
                 }
             }
         }
-    }
-
-    private void renderKoala () {
-        // based on the koala state, get the animation frame
-        TextureRegion frame = null;
-        switch (koala.state) {
-        case Standing:
-            frame = stand.getKeyFrame(koala.stateTime);
-            break;
-        case Walking:
-            frame = walk.getKeyFrame(koala.stateTime);
-            break;
-        case Jumping:
-            frame = jump.getKeyFrame(koala.stateTime);
-            break;
-        }
-
-        // draw the koala, depending on the current velocity
-        // on the x-axis, draw the koala facing either right
-        // or left
-        Batch batch = renderer.getBatch();
-        batch.begin();
-        if (koala.facesRight) {
-            batch.draw(frame, koala.position.x, koala.position.y, koala.width, koala.height);
-        } else {
-            batch.draw(frame, koala.position.x + koala.width, koala.position.y, -koala.width, koala.height);
-        }
-        batch.end();
     }
 
     private void renderDebug () {
@@ -297,9 +259,13 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
 
         debugRenderer.setColor(Color.YELLOW);
         TiledMapTileLayer layer = (TiledMapTileLayer)map.getLayers().get("walls");
+
         for (int y = 0; y <= layer.getHeight(); y++) {
+
             for (int x = 0; x <= layer.getWidth(); x++) {
+
                 Cell cell = layer.getCell(x, y);
+
                 if (cell != null) {
                     if (camera.frustum.boundsInFrustum(x + 0.5f, y + 0.5f, 0, 1, 1, 0))
                         debugRenderer.rect(x, y, 1, 1);
@@ -311,7 +277,7 @@ public class TestPlatform extends InputAdapter implements ApplicationListener {
 
     @Override
     public void dispose () {
-        koalaTexture.dispose();
+        koala.getSprite().dispose();
     }
 
     @Override
