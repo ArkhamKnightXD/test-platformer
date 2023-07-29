@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -28,21 +27,14 @@ import knight.arkham.objects.Koala;
 public class Platformer extends InputAdapter implements ApplicationListener {
 
     private TiledMap map;
-    private OrthogonalTiledMapRenderer renderer;
+    private OrthogonalTiledMapRenderer mapRenderer;
     private OrthographicCamera camera;
     private Koala koala;
-    private final Pool<Rectangle> rectPool = new Pool<>() {
-        @Override
-        protected Rectangle newObject() {
-            return new Rectangle();
-        }
-    };
     private final Array<Rectangle> tiles = new Array<>();
-
     private static final float GRAVITY = -2.5f;
-
-    private boolean debug = false;
+    private boolean debug = true;
     private ShapeRenderer debugRenderer;
+    private Pool<Rectangle> rectPool;
 
     @Override
     public void create () {
@@ -52,7 +44,14 @@ public class Platformer extends InputAdapter implements ApplicationListener {
 
         // load the map, set the unit scale to 1/16 (1 unit == 16 pixels)
         map = new TmxMapLoader().load("level1.tmx");
-        renderer = new OrthogonalTiledMapRenderer(map, 1 / 16f);
+        mapRenderer = new OrthogonalTiledMapRenderer(map, 1 / 16f);
+
+        rectPool = new Pool<>() {
+            @Override
+            protected Rectangle newObject() {
+                return new Rectangle();
+            }
+        };
 
         // create an orthographic camera, shows us 30x20 units of the world
         camera = new OrthographicCamera();
@@ -67,8 +66,6 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         // clear the screen
         ScreenUtils.clear(0.7f, 0.7f, 1.0f, 1);
 
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         // get the delta time
         float deltaTime = Gdx.graphics.getDeltaTime();
 
@@ -81,11 +78,11 @@ public class Platformer extends InputAdapter implements ApplicationListener {
 
         // set the TiledMapRenderer view based on what the
         // camera sees, and render the map
-        renderer.setView(camera);
-        renderer.render();
+        mapRenderer.setView(camera);
+        mapRenderer.render();
 
         // render the koala
-        koala.draw(renderer.getBatch());
+        koala.draw(mapRenderer.getBatch());
 
         // render debug rectangles
         if (debug)
@@ -182,8 +179,6 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         koala.velocity.x *= koala.damping;
     }
 
-
-
     private void getTiles (int startX, int startY, int endX, int endY, Array<Rectangle> tiles) {
 
         TiledMapTileLayer layer = (TiledMapTileLayer)map.getLayers().get("walls");
@@ -216,6 +211,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
 
         debugRenderer.setColor(Color.YELLOW);
         TiledMapTileLayer layer = (TiledMapTileLayer)map.getLayers().get("walls");
+//   This method check all the tiles on each row for every column
 
         for (int y = 0; y <= layer.getHeight(); y++) {
 
