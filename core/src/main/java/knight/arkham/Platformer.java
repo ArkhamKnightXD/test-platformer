@@ -31,12 +31,12 @@ public class Platformer extends InputAdapter implements ApplicationListener {
     private Koala koala;
     private final Array<Rectangle> tiles = new Array<>();
     private static final float GRAVITY = -2.5f;
-    private boolean debug;
+    private boolean isDebugMode;
     private ShapeRenderer debugRenderer;
     private Pool<Rectangle> rectPool;
 
     @Override
-    public void create () {
+    public void create() {
 
         // create the Koala we want to move around the world
         koala = new Koala();
@@ -61,7 +61,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
     }
 
     @Override
-    public void render () {
+    public void render() {
         // clear the screen
         ScreenUtils.clear(0.7f, 0.7f, 1.0f, 1);
 
@@ -84,11 +84,11 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         koala.draw(mapRenderer.getBatch());
 
         // render debug rectangles
-        if (debug)
+        if (isDebugMode)
             renderDebug();
     }
 
-    private void updateKoala (float deltaTime) {
+    private void updateKoala(float deltaTime) {
         if (deltaTime == 0) return;
 
         if (deltaTime > 0.1f)
@@ -97,7 +97,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         koala.update(deltaTime);
 
         if (Gdx.input.isKeyJustPressed(Keys.B))
-            debug = !debug;
+            isDebugMode = !isDebugMode;
 
         // apply gravity if we are falling
         koala.velocity.add(0, GRAVITY);
@@ -137,7 +137,6 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         // top bounding box edge, otherwise check the ones to the bottom
         if (koala.velocity.y > 0)
             startY = endY = (int)(koala.position.y + koala.height + koala.velocity.y);
-
         else
             startY = endY = (int)(koala.position.y + koala.velocity.y);
 
@@ -178,7 +177,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         koala.velocity.x *= koala.damping;
     }
 
-    private void getTiles (int startX, int startY, int endX, int endY, Array<Rectangle> tiles) {
+    private void getTiles(int startX, int startY, int endX, int endY, Array<Rectangle> tiles) {
 
         TiledMapTileLayer layer = (TiledMapTileLayer)map.getLayers().get("walls");
 
@@ -201,7 +200,8 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         }
     }
 
-    private void renderDebug () {
+    private void renderDebug() {
+
         debugRenderer.setProjectionMatrix(camera.combined);
         debugRenderer.begin(ShapeType.Line);
 
@@ -224,23 +224,19 @@ public class Platformer extends InputAdapter implements ApplicationListener {
                 }
             }
         }
+
         debugRenderer.end();
     }
 
     @Override
-    public void dispose () {
-        koala.dispose();
-    }
+    public void dispose () {koala.dispose();}
 
     @Override
-    public void resume () {
-    }
+    public void resume () {}
 
     @Override
-    public void resize(int width, int height) {
-    }
+    public void resize(int width, int height) {}
 
     @Override
-    public void pause() {
-    }
+    public void pause() {}
 }

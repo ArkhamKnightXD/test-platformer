@@ -8,10 +8,11 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
 
 public class Koala {
-    private enum PlayerState {Standing, Walking, Jumping}
-    private PlayerState currentState = PlayerState.Walking;
+    private enum PlayerState {STANDING, WALKING, JUMPING}
+    private PlayerState currentState = PlayerState.WALKING;
     public float width;
     public float height;
     public float damping = 0.87f;
@@ -20,9 +21,9 @@ public class Koala {
     private float stateTimer;
     private boolean isMovingRight = true;
     public boolean isGrounded;
-    private final Animation<TextureRegion> stand;
-    private final Animation<TextureRegion> walk;
-    private final Animation<TextureRegion> jump;
+    private final TextureRegion standingRegion;
+    private final TextureRegion jumpingRegion;
+    private final Animation<TextureRegion> walkingAnimation;
     private final Texture sprite = new Texture("koalio.png");
 
     public Koala() {
@@ -30,16 +31,26 @@ public class Koala {
         // load the koala frames, split them, and assign them to Animations
         TextureRegion[] regions = TextureRegion.split(sprite, 18, 26)[0];
 
-        stand = new Animation<>(0, regions[0]);
-        jump = new Animation<>(0, regions[1]);
-        walk = new Animation<>(0.15f, regions[2], regions[3], regions[4]);
-        walk.setPlayMode(Animation.PlayMode.LOOP_PINGPONG);
+        standingRegion = regions[0];
+        jumpingRegion = regions[1];
+
+        walkingAnimation = new Animation<>(0.15f, regions[2], regions[3], regions[4]);
 
         // figure out the width and height of the koala for collision
         // detection and rendering by converting a koala frames pixel
         // size into world units (1 unit == 16 pixels)
         width = 1 / 16f * regions[0].getRegionWidth();
         height = 1 / 16f * regions[0].getRegionHeight();
+    }
+
+    private Animation<TextureRegion> makeAnimation(TextureRegion region, int frameWidth, int frameHeight, int totalFrames, float frameDuration, int firstFramePosition) {
+
+        Array<TextureRegion> animationFrames = new Array<>();
+
+        for (int i = firstFramePosition; i < totalFrames; i++)
+            animationFrames.add(new TextureRegion(region, i * frameWidth, 0, frameWidth, frameHeight));
+
+        return new Animation<>(frameDuration, animationFrames);
     }
 
     public void update(float deltaTime) {
@@ -50,7 +61,7 @@ public class Koala {
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && isGrounded) {
             float jumpVelocity = 40f;
             velocity.y += jumpVelocity;
-            currentState = PlayerState.Jumping;
+            currentState = PlayerState.JUMPING;
             isGrounded = false;
         }
 
@@ -59,7 +70,7 @@ public class Koala {
             velocity.x = -maxVelocity;
 
             if (isGrounded)
-                currentState = PlayerState.Walking;
+                currentState = PlayerState.WALKING;
 
             isMovingRight = false;
         }
@@ -68,7 +79,7 @@ public class Koala {
             velocity.x = maxVelocity;
 
             if (isGrounded)
-                currentState = PlayerState.Walking;
+                currentState = PlayerState.WALKING;
 
             isMovingRight = true;
         }
@@ -81,7 +92,7 @@ public class Koala {
             velocity.x = 0;
 
             if (isGrounded)
-                currentState = PlayerState.Standing;
+                currentState = PlayerState.STANDING;
         }
     }
 
@@ -90,14 +101,14 @@ public class Koala {
         TextureRegion frame = null;
 
         switch (currentState) {
-            case Standing:
-                frame = stand.getKeyFrame(stateTimer);
+            case STANDING:
+                frame = standingRegion;
                 break;
-            case Walking:
-                frame = walk.getKeyFrame(stateTimer);
+            case WALKING:
+                frame = walkingAnimation.getKeyFrame(stateTimer, true);
                 break;
-            case Jumping:
-                frame = jump.getKeyFrame(stateTimer);
+            case JUMPING:
+                frame = jumpingRegion;
                 break;
         }
 
