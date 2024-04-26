@@ -1,4 +1,4 @@
-package knight.arkham.objects;
+package knight.arkham;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -10,25 +10,22 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
 public class Koala {
+    private enum PlayerState {Standing, Walking, Jumping}
+    private PlayerState currentState = PlayerState.Walking;
     public float width;
     public float height;
-    public float maxVelocity;
-    public float jumpVelocity;
-    public float damping;
-    public final Vector2 position;
-    public final Vector2 velocity;
-    public PlayerState state;
-    public float stateTime;
-    public boolean facesRight;
-    public boolean grounded;
+    public float damping = 0.87f;
+    public final Vector2 position = new Vector2(20, 20);
+    public final Vector2 velocity = new Vector2();
+    private float stateTimer;
+    private boolean isMovingRight = true;
+    public boolean isGrounded;
     private final Animation<TextureRegion> stand;
     private final Animation<TextureRegion> walk;
     private final Animation<TextureRegion> jump;
-    private final Texture sprite;
+    private final Texture sprite = new Texture("koalio.png");
 
     public Koala() {
-
-        sprite = new Texture("koalio.png");
 
         // load the koala frames, split them, and assign them to Animations
         TextureRegion[] regions = TextureRegion.split(sprite, 18, 26)[0];
@@ -43,48 +40,37 @@ public class Koala {
         // size into world units (1 unit == 16 pixels)
         width = 1 / 16f * regions[0].getRegionWidth();
         height = 1 / 16f * regions[0].getRegionHeight();
-
-        state = PlayerState.Walking;
-        stateTime = 0;
-
-        maxVelocity = 10f;
-        jumpVelocity = 40f;
-        damping = 0.87f;
-
-        position = new Vector2(20, 20);
-        velocity = new Vector2();
-
-        facesRight = true;
-        grounded = false;
     }
 
     public void update(float deltaTime) {
 
-        stateTime += deltaTime;
+        stateTimer += deltaTime;
 
         // check input and apply to velocity & state
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && grounded) {
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && isGrounded) {
+            float jumpVelocity = 40f;
             velocity.y += jumpVelocity;
-            state = PlayerState.Jumping;
-            grounded = false;
+            currentState = PlayerState.Jumping;
+            isGrounded = false;
         }
 
+        float maxVelocity = 10f;
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
             velocity.x = -maxVelocity;
 
-            if (grounded)
-                state = PlayerState.Walking;
+            if (isGrounded)
+                currentState = PlayerState.Walking;
 
-            facesRight = false;
+            isMovingRight = false;
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
             velocity.x = maxVelocity;
 
-            if (grounded)
-                state = PlayerState.Walking;
+            if (isGrounded)
+                currentState = PlayerState.Walking;
 
-            facesRight = true;
+            isMovingRight = true;
         }
 
         // clamp the velocity to the maximum, x-axis only
@@ -94,8 +80,8 @@ public class Koala {
         if (Math.abs(velocity.x) < 1) {
             velocity.x = 0;
 
-            if (grounded)
-                state = PlayerState.Standing;
+            if (isGrounded)
+                currentState = PlayerState.Standing;
         }
     }
 
@@ -103,15 +89,15 @@ public class Koala {
         // based on the koala state, get the animation frame
         TextureRegion frame = null;
 
-        switch (state) {
+        switch (currentState) {
             case Standing:
-                frame = stand.getKeyFrame(stateTime);
+                frame = stand.getKeyFrame(stateTimer);
                 break;
             case Walking:
-                frame = walk.getKeyFrame(stateTime);
+                frame = walk.getKeyFrame(stateTimer);
                 break;
             case Jumping:
-                frame = jump.getKeyFrame(stateTime);
+                frame = jump.getKeyFrame(stateTimer);
                 break;
         }
 
@@ -120,7 +106,7 @@ public class Koala {
         // or left
         batch.begin();
 
-        if (facesRight)
+        if (isMovingRight)
             batch.draw(frame, position.x, position.y, width, height);
 
         else
@@ -129,5 +115,5 @@ public class Koala {
         batch.end();
     }
 
-    public Texture getSprite() {return sprite;}
+    public void dispose() { sprite.dispose();}
 }

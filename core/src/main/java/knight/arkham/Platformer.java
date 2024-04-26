@@ -17,7 +17,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.ScreenUtils;
-import knight.arkham.objects.Koala;
 
 /** Super Mario Brothers-like very basic platformer, using a tile map built using <a href="http://www.mapeditor.org/">Tiled</a> and a
  * tileset and sprites by <a href="http://www.vickiwenderlich.com/">Vicky Wenderlich</a></p>
@@ -32,7 +31,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
     private Koala koala;
     private final Array<Rectangle> tiles = new Array<>();
     private static final float GRAVITY = -2.5f;
-    private boolean debug = true;
+    private boolean debug;
     private ShapeRenderer debugRenderer;
     private Pool<Rectangle> rectPool;
 
@@ -161,7 +160,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
                 } else {
                     koala.position.y = tile.y + tile.height;
                     // if we hit the ground, mark us as grounded, so we can jump
-                    koala.grounded = true;
+                    koala.isGrounded = true;
                 }
                 koala.velocity.y = 0;
                 break;
@@ -230,7 +229,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
 
     @Override
     public void dispose () {
-        koala.getSprite().dispose();
+        koala.dispose();
     }
 
     @Override
