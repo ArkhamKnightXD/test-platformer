@@ -89,7 +89,7 @@ public class Koala {
         }
     }
 
-    private TextureRegion getActualRegion() {
+    private TextureRegion getAnimationRegion() {
 
         switch (currentState) {
 
@@ -106,7 +106,7 @@ public class Koala {
 
     public void draw(Batch batch) {
 
-        actualRegion = getActualRegion();
+        actualRegion = getAnimationRegion();
         // draw the koala, depending on the current velocity
         // on the x-axis, draw the koala facing either right or left
         batch.begin();
