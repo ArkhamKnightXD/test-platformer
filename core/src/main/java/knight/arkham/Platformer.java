@@ -69,7 +69,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         float deltaTime = Gdx.graphics.getDeltaTime();
 
         // update the koala (process input, collision detection, position update)
-        updateKoala(deltaTime);
+        update(deltaTime);
 
         // let the camera follow the koala, x-axis only
         camera.position.x = koala.position.x;
@@ -88,8 +88,10 @@ public class Platformer extends InputAdapter implements ApplicationListener {
             renderDebug();
     }
 
-    private void updateKoala(float deltaTime) {
-        if (deltaTime == 0) return;
+    private void update(float deltaTime) {
+
+        if (deltaTime == 0)
+            return;
 
         if (deltaTime > 0.1f)
             deltaTime = 0.1f;
@@ -111,6 +113,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         // right bounding box edge, otherwise check the ones to the left
         Rectangle koalaRect = rectPool.obtain();
         koalaRect.set(koala.position.x, koala.position.y, koala.width, koala.height);
+
         int startX, startY, endX, endY;
 
         if (koala.velocity.x > 0)
@@ -121,7 +124,9 @@ public class Platformer extends InputAdapter implements ApplicationListener {
 
         startY = (int)(koala.position.y);
         endY = (int)(koala.position.y + koala.height);
+
         getTiles(startX, startY, endX, endY, tiles);
+
         koalaRect.x += koala.velocity.x;
 
         for (Rectangle tile : tiles) {
@@ -131,6 +136,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
                 break;
             }
         }
+
         koalaRect.x = koala.position.x;
 
         // if the koala is moving upwards, check the tiles to the top of its
@@ -142,7 +148,9 @@ public class Platformer extends InputAdapter implements ApplicationListener {
 
         startX = (int)(koala.position.x);
         endX = (int)(koala.position.x + koala.width);
+
         getTiles(startX, startY, endX, endY, tiles);
+
         koalaRect.y += koala.velocity.y;
 
         for (Rectangle tile : tiles) {
@@ -156,15 +164,20 @@ public class Platformer extends InputAdapter implements ApplicationListener {
                     // we hit a block jumping upwards, let's destroy it!
                     TiledMapTileLayer layer = (TiledMapTileLayer)map.getLayers().get("walls");
                     layer.setCell((int)tile.x, (int)tile.y, null);
-                } else {
+
+                }
+                else {
+
                     koala.position.y = tile.y + tile.height;
                     // if we hit the ground, mark us as grounded, so we can jump
                     koala.isGrounded = true;
                 }
+
                 koala.velocity.y = 0;
                 break;
             }
         }
+
         rectPool.free(koalaRect);
 
         // unscale the velocity by the inverse delta time and set
@@ -174,7 +187,8 @@ public class Platformer extends InputAdapter implements ApplicationListener {
 
         // Apply damping to the velocity on the x-axis, so we don't
         // walk infinitely once a key was pressed
-        koala.velocity.x *= koala.damping;
+        float koalaDamping = 0.87f;
+        koala.velocity.x *= koalaDamping;
     }
 
     private void getTiles(int startX, int startY, int endX, int endY, Array<Rectangle> tiles) {
@@ -182,6 +196,7 @@ public class Platformer extends InputAdapter implements ApplicationListener {
         TiledMapTileLayer layer = (TiledMapTileLayer)map.getLayers().get("walls");
 
         rectPool.freeAll(tiles);
+
         tiles.clear();
 
         for (int y = startY; y <= endY; y++) {

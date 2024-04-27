@@ -8,14 +8,13 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
 
 public class Koala {
+
     private enum PlayerState {STANDING, WALKING, JUMPING}
     private PlayerState currentState = PlayerState.WALKING;
     public float width;
     public float height;
-    public float damping = 0.87f;
     public final Vector2 position = new Vector2(20, 20);
     public final Vector2 velocity = new Vector2();
     private float stateTimer;
@@ -24,12 +23,15 @@ public class Koala {
     private final TextureRegion standingRegion;
     private final TextureRegion jumpingRegion;
     private final Animation<TextureRegion> walkingAnimation;
+    private TextureRegion actualRegion;
     private final Texture sprite = new Texture("koalio.png");
 
     public Koala() {
 
         // load the koala frames, split them, and assign them to Animations
         TextureRegion[] regions = TextureRegion.split(sprite, 18, 26)[0];
+
+        actualRegion = regions[0];
 
         standingRegion = regions[0];
         jumpingRegion = regions[1];
@@ -43,22 +45,13 @@ public class Koala {
         height = 1 / 16f * regions[0].getRegionHeight();
     }
 
-    private Animation<TextureRegion> makeAnimation(TextureRegion region, int frameWidth, int frameHeight, int totalFrames, float frameDuration, int firstFramePosition) {
-
-        Array<TextureRegion> animationFrames = new Array<>();
-
-        for (int i = firstFramePosition; i < totalFrames; i++)
-            animationFrames.add(new TextureRegion(region, i * frameWidth, 0, frameWidth, frameHeight));
-
-        return new Animation<>(frameDuration, animationFrames);
-    }
-
     public void update(float deltaTime) {
 
         stateTimer += deltaTime;
 
         // check input and apply to velocity & state
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && isGrounded) {
+
             float jumpVelocity = 40f;
             velocity.y += jumpVelocity;
             currentState = PlayerState.JUMPING;
@@ -96,32 +89,32 @@ public class Koala {
         }
     }
 
-    public void draw(Batch batch) {
-        // based on the koala state, get the animation frame
-        TextureRegion frame = null;
+    private TextureRegion getActualRegion() {
 
         switch (currentState) {
-            case STANDING:
-                frame = standingRegion;
-                break;
-            case WALKING:
-                frame = walkingAnimation.getKeyFrame(stateTimer, true);
-                break;
-            case JUMPING:
-                frame = jumpingRegion;
-                break;
-        }
 
+            case WALKING:
+                return walkingAnimation.getKeyFrame(stateTimer, true);
+
+            case JUMPING:
+                return jumpingRegion;
+
+            default:
+                return standingRegion;
+        }
+    }
+
+    public void draw(Batch batch) {
+
+        actualRegion = getActualRegion();
         // draw the koala, depending on the current velocity
-        // on the x-axis, draw the koala facing either right
-        // or left
+        // on the x-axis, draw the koala facing either right or left
         batch.begin();
 
         if (isMovingRight)
-            batch.draw(frame, position.x, position.y, width, height);
-
+            batch.draw(actualRegion, position.x, position.y, width, height);
         else
-            batch.draw(frame, position.x + width, position.y, -width, height);
+            batch.draw(actualRegion, position.x + width, position.y, -width, height);
 
         batch.end();
     }
