@@ -82,6 +82,7 @@ public class Koala {
 
         // If the velocity is < 1, set it to 0 and set state to Standing
         if (Math.abs(velocity.x) < 1) {
+
             velocity.x = 0;
 
             if (isGrounded)
